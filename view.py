@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect,request,url_for
-
+from model.Sql_data import get_userdata
 USER = {
     1: {'name': 'wdc', 'age': 18, 'text': '我的名字叫做王德昌'},
     2: {'name': 'wdw', 'age': 16, 'text': '我的名字叫做王德武'},
@@ -23,14 +23,11 @@ def login():
         user = request.form.get('user')
         pwd = request.form.get('pwd')
         print(user,pwd)
-        if user == 'wangda' and pwd == '123':
+        if_has_user=len(get_userdata(user,pwd))
+        if  if_has_user >0:
             # 登录成功后用session来保存这个用户信息
             session['user_info'] = user
-            return redirect(url_for('main.router_address',user_name=user))
-        if user == 'wangda2' and pwd == '123':
-            # 登录成功后用session来保存这个用户信息
-            session['user_info'] = user
-            return redirect(url_for('main.router_address',user_name=user))
+            return redirect(url_for('main.router_address', user_name=user))
         return render_template('login.html', error="用户名或密码错误")
 
 
@@ -57,5 +54,5 @@ def router_address(user_name):
     url_1 = url_for('main.l1')
     user = session.get('user_info')
     if user_name:
-        return redirect('http://www.baidu.com')
+        return redirect('http://minimal-notebook-s2i-anyuid-{0}-myproject.192.168.99.101.nip.io'.format(user_name))
     return redirect(url_1)
