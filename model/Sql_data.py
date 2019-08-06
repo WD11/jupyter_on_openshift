@@ -4,9 +4,6 @@ class DB_Operation(object):
     dbconn = None
     curdb = None
 
-    dict = {'user': 'pay_data', 'host': '10.94.68.26', 'port': 3306, 'passwd': 'LP68V4EGxWyPOWnVWKQ1aWUyoyI=payDATA',
-            'db': 'reconcile'}
-    dict_dbs['reconcile'] = dict
     dict = {'user': 'root', 'host': 'localhost', 'port': 3306, 'passwd': '123456',
             'db': 'jupyter_on_openshift'}
     dict_dbs['localhost'] = dict
