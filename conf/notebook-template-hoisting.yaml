@@ -1,0 +1,154 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: Template for deploying Jupyter Notebook images.
+    iconClass: icon-python
+    openshift.io/display-name: minimal-notebook-s2i-assigned-uid-zhengzhicong
+    tags: python,jupyter
+  name: minimal-notebook-s2i-assigned-uid-zhengzhicong
+objects:
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    generation: 3
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}
+      spec:
+        containers:
+        - env:
+          - name: PERSISTENT_VOLUME_ROOTDIR
+            value: ${PERSISTENT_VOLUME_ROOTDIR}
+          - name: PERSISTENT_VOLUME_WORKSPACE
+            value: ${PERSISTENT_VOLUME_WORKSPACE}
+          image: 172.30.1.1:5000/myproject/minimal-notebook-s2i-assigned-uid@sha256:4732c720bc2561bd1d35dadbf4d4f02245af429bbf63bfdf77bcb5a4827a8634
+          imagePullPolicy: Always
+          name: ${APP_NAME}
+          ports:
+          - containerPort: 8888
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /dev/public
+            name: volume-readonly
+            readOnly: true
+          - mountPath: ${PERSISTENT_VOLUME_ROOTDIR}
+            name: volume-${APP_NAME}
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: volume-readonly
+          persistentVolumeClaim:
+            claimName: public-readonly-pvc
+        - name: volume-${APP_NAME}
+          persistentVolumeClaim:
+            claimName: ${APP_NAME}-data
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APP_NAME}
+        from:
+          kind: ImageStreamTag
+          name: minimal-notebook-s2i-assigned-uid:latest
+          namespace: myproject
+        lastTriggeredImage: 172.30.1.1:5000/myproject/minimal-notebook-s2i-assigned-uid@sha256:4732c720bc2561bd1d35dadbf4d4f02245af429bbf63bfdf77bcb5a4827a8634
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    ports:
+    - name: 8888-tcp
+      port: 8888
+      protocol: TCP
+      targetPort: 8888
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/host.generated: 'true'
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    host: ${APP_NAME}-myproject.192.168.99.100.nip.io
+    port:
+      targetPort: 8888-tcp
+    to:
+      kind: Service
+      name: ${APP_NAME}
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_SIZE}
+    storageClass: storageClassWithFlagSet
+parameters:
+- description: all resourse name
+  name: APP_NAME
+  value: minimal-notebook-s2i-assigned-uid-zhengzhicong
+- description: PV VOLUME SIZE
+  name: VOLUME_SIZE
+  value: 10Gi
+- name: PERSISTENT_VOLUME_WORKSPACE
+  value: data
+- name: PERSISTENT_VOLUME_ROOTDIR
+  required: true
+  value: /home/jovyan/volume

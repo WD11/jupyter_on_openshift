@@ -54,5 +54,5 @@ def router_address(user_name):
     url_1 = url_for('main.l1')
     user = session.get('user_info')
     if user_name:
-        return redirect('http://minimal-notebook-s2i-anyuid-{0}-myproject.192.168.99.101.nip.io'.format(user_name))
+        return redirect('http://minimal-notebook-s2i-assigned-uid-{0}-myproject.192.168.99.100.nip.io'.format(user_name))
     return redirect(url_1)
